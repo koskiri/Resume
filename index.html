@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnlyUs Launcher</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .form-input::placeholder {
+            color: #9CA3AF;
+        }
+        
+        .auth-checkbox input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #D1D5DB;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .auth-checkbox input[type="checkbox"]:checked {
+            background-color: #3B82F6;
+            border-color: #3B82F6;
+        }
+        
+        .auth-checkbox input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .auth-button {
+            transition: all 0.2s ease;
+        }
+        
+        .auth-button:active {
+            transform: translateY(1px);
+        }
+        
+        .nav-icon {
+            opacity: 0.8;
+        }
+        
+        .nav-item.active .nav-icon {
+            opacity: 1;
+        }
+        
+        .loading-spinner.small {
+            width: 20px;
+            height: 20px;
+            border-width: 2px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #E5E7EB;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #8B5CF6;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+        
+        .user-you-badge {
+            background: #3B82F6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        
+        .admin-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        
+        .admin-status.admin {
+            background: #F5F3FF;
+            color: #7C3AED;
+        }
+        
+        .admin-status.user {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+        
+        .delete-account-btn {
+            background: #FEE2E2;
+            color: #DC2626;
+            border: 1px solid #FECACA;
+        }
+        
+        .delete-account-btn:hover {
+            background: #FECACA;
+        }
+
+        /* Стили для выбора серверов в модах */
+        .mod-servers-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .server-option {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #F3F4F6;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .server-option input {
+            margin: 0;
+        }
+        
+        .server-option.selected {
+            background: #DBEAFE;
+            color: #1D4ED8;
+        }
+        
+        .server-badge-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-right: 4px;
+        }
+        
+        .server-badge-icon.vanilla {
+            background: #7C3AED;
+            color: white;
+        }
+        
+        .server-badge-icon.hitech {
+            background: #059669;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Шапка приложения -->
+    <div class="app-header">
+        <div class="header-left">
+            <div class="logo-placeholder">OU</div>
+            <span class="app-title">OnlyUs Launcher</span>
+            <span class="admin-mode-indicator" id="adminModeIndicator">Админ</span>
+        </div>
+        <div class="header-right">
+            <button class="window-btn minimize" id="minimizeBtn">─</button>
+            <button class="window-btn maximize" id="maximizeBtn">□</button>
+            <button class="window-btn close" id="closeBtn">✕</button>
+        </div>
+    </div>
+
+    <!-- Основной контейнер с боковой панелью -->
+    <div class="app-container">
+        <!-- Боковая панель (скрыта на страницах авторизации) -->
+        <div class="sidebar" id="sidebar" style="display: none;">
+            <div class="sidebar-header">
+                <div class="server-title">OnlyUs Launcher</div>
+                <div class="server-version">Версия 1.0.0</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-page="main">
+                    <div class="nav-icon">▶</div>
+                    <span>Играть</span>
+                </button>
+                <button class="nav-item" data-page="news">
+                    <div class="nav-icon">📰</div>
+                    <span>Новости</span>
+                </button>
+                <button class="nav-item" data-page="settings">
+                    <div class="nav-icon">⚙️</div>
+                    <span>Настройки</span>
+                </button>
+                <button class="nav-item" data-page="account">
+                    <div class="nav-icon">👤</div>
+                    <span>Аккаунт</span>
+                </button>
+                <!-- Кнопка админа (только для админов) -->
+                <button class="nav-item admin-btn" id="adminNavBtn" data-page="admin" style="display: none;">
+                    <div class="nav-icon">👑</div>
+                    <span>Админ</span>
+                    <span class="admin-badge">ADMIN</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar" id="userAvatar">Г</div>
+                    <div class="user-info">
+                        <div class="username" id="userName">Гость</div>
+                        <div class="user-role" id="userRole">Игрок</div>
+                    </div>
+                </div>
+                
+                <!-- Меню профиля -->
+                <div class="profile-menu">
+                    <button class="menu-item" onclick="launcherApp.showPage('account')">
+                        <div class="menu-icon">⚙️</div>
+                        <span>Настройки аккаунта</span>
+                    </button>
+                    <button class="menu-item logout" onclick="launcherApp.logout()">
+                        <div class="menu-icon">🚪</div>
+                        <span>Выйти из аккаунта</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="main-content" id="content">
+            <!-- Контент загружается динамически -->
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">
+                    <h1 class="loading-title">Запуск лаунчера...</h1>
+                    <p class="loading-subtitle">Пожалуйста, подождите</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для загрузки изображений -->
+    <div id="imageUploadModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Загрузка изображения</h2>
+                <button class="modal-close" onclick="launcherApp.closeImageUploadModal()">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div id="imageUploadContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно удаления аккаунта -->
+    <div id="deleteAccountModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: #DC2626;">⚠️ Удаление аккаунта</h2>
+                <button class="modal-close" onclick="launcherApp.closeDeleteAccountModal()">&times;</button>
+            </div>
+            <div class="modal-content">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; color: #DC2626; margin-bottom: 16px;">🗑️</div>
+                    <h3 style="font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 12px;">
+                        Вы уверены, что хотите удалить аккаунт?
+                    </h3>
+                    <p style="color: #6B7280; line-height: 1.5; margin-bottom: 24px;">
+                        Это действие <strong style="color: #DC2626;">необратимо</strong>. Все ваши данные будут удалены без возможности восстановления.
+                    </p>
+                    <div style="background: #FEF2F2; border-radius: 8px; padding: 16px; margin-bottom: 24px; border: 1px solid #FECACA;">
+                        <p style="color: #DC2626; font-size: 14px;">
+                            <strong>Что будет удалено:</strong>
+                        </p>
+                        <ul style="color: #6B7280; font-size: 14px; text-align: left; padding-left: 20px;">
+                            <li>Данные профиля и статистика</li>
+                            <li>Привязанная электронная почта</li>
+                            <li>История игры и достижения</li>
+                            <li>Все настройки аккаунта</li>
+                        </ul>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Введите ваш пароль для подтверждения:</label>
+                        <input type="password" class="form-input" id="deleteAccountPassword" placeholder="Введите пароль">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between;">
+                <button class="btn btn-secondary" onclick="launcherApp.closeDeleteAccountModal()">
+                    Отмена
+                </button>
+                <button class="btn btn-danger" onclick="launcherApp.confirmDeleteAccount()">
+                    Удалить аккаунт
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/core/ui.js"></script>
+    <script src="js/core/store.js"></script>
+    <script src="js/core/router.js"></script>
+
+    <script src="js/app.js"></script>
+    <script src="js/admin.js"></script> <!-- СНАЧАЛА логика админки -->
+
+    <script src="js/pages/auth.page.js"></script>
+    <script src="js/pages/main.page.js"></script>
+    <script src="js/pages/settings.page.js"></script>
+    <script src="js/pages/news.page.js"></script>
+    <script src="js/pages/admin.page.js"></script> <!-- ПОТОМ регистрация страницы -->
+
+    <script src="js/boot.js"></script>
+</body>
+</html>
